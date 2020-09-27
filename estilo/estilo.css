@@ -1,4 +1,24 @@
 div > form > i.aviso {
     color: gray;
-    font-size: small;
+    font-size: small
 }
+h1 {
+    color: blue;
+}
+/*
+div.table {
+    width: 600px;
+    height: 300px;
+}
+div.table.linha {
+    width: 600px;
+    height: 300px;
+    float: left;
+}
+
+div.table.linha.cabecalho {
+    width: 200px;
+    height: 30px;
+    float: left;
+}
+*/

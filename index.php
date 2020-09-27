@@ -1,3 +1,6 @@
+<?php 
+    session_start();
+?>
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -15,52 +18,49 @@
             <input id="senha" type="password" name="senha" minlength="8" maxlength="12"/><br/>
             <i class="aviso">A senha deve ter min 8 e max de 12 caracteres</i><br/>
             <input type="submit" name="login" value="Logar" class="form button"/>
-            <input type="button" name="signUP" value="Cadastrar" class="form button" onclick="location.href='cadastro.php'"/>
+            <input type="button" name="signUP" value="Cadastrar" class="form button" onclick="location.href='cadastrar.php'"/>
         </form>
     </div>
 </body>
 </html>
 <?php
-    $senha = $login = '';
+    require_once 'Usuario.php';
     if($_SERVER["REQUEST_METHOD"] == 'POST') {
-        $login = $_POST['email'];
-        $senha = $_POST['senha'];
-        if(!($senha && $login)){
+        $user = new Usuario($_POST['email'],$_POST['senha']);
+
+        if(!($user->estaVazio()))
             echo "<script>
                     alert(\"Erro ao enviar dados \\nTente novamente!!\");
                     history.back()
                 </script>";
-        } else {
-            include_once 'conectar.php';
-            $result = $conection->query("
-                SELECT email, senha, tipo_usuario 
-                FROM user_data 
-                WHERE email = '$login'
-                LIMIT 1
-            ");
-            
-            if($result->num_rows > 0) {
-                while($row = $result->fetch_assoc()) {
-                    if(password_verify($senha, $row['senha'])) {
-                        echo "<script>
-                                alert(\"Login efetuado com sucesso!\");
-                                history.back()
-                            </script>";
-                    } else {
-                        echo "<script>
-                                alert(\"Senha invalida!\");
-                                history.back()
-                            </script>";
-                    }
-                }
+        else {
+            $valores = ['email', 'senha', 'nome', 'tipo_usuario'];
+            $result = $user->pegarDados($valores);
+            if($row = $result->fetch_assoc()) {
+                if($user->validarSenha($row)) {
+                    //TEMPORARIO
+                    echo "<script>
+                            alert(\"Login efetuado com sucesso!\");
+                            history.back()
+                        </script>";
+                    
+                    $_SESSION["nome"] = ucfirst($row['nome']);
+                    $_SESSION["tipo_usuario"] = $row['tipo_usuario'];
+
+                    header('Location: dashboard.php');
+                    
+                    setcookie("session","",time()+60*60*24*30, '/','http://localhost/CRUD/',false,true);
+                } else
+                    echo "<script>  
+                            alert(\"Senha invalida!\");
+                            history.back()
+                        </script>";
             } else
                 echo "<script>
                         alert(\"Usuario não cadastrado!\");
                         history.back()
                     </script>";
-
         }
     }
-    echo "<br/>E-mail: ".$login." <br/>Senha: ".$senha;
     
 ?>
