@@ -1,4 +1,5 @@
 <?php 
-    if(!(isset($_SESSION['tipo_usuario'])))
+    session_start();
+    if(!(isset($_SESSION["id"])))
         header('Location: index.php');
 ?>
