@@ -2,11 +2,58 @@
 class Endereco{
     private $pais, $estado, $cidade, $bairro, $rua, $casa;
 
-    public function Endereco($cidade, $bairro, $rua, $casa) {
-        $this->setCidade($cidade);
-        $this->setBairro($bairro);
-        $this->setRua($rua);
-        $this->setCasa($casa);
+    public function Endereco() {}
+
+    public function cadastrar($id) {
+        require 'conectar.php';
+        $sql = "
+            INSERT INTO endereco
+                (pais, estado, cidade, bairro, rua, numero, pk_compania) 
+            VALUES (
+                    '".$this->getPais()."',
+                    '".$this->getEstado()."',
+                    '".$this->getCidade()."',
+                    '".$this->getBairro()."',
+                    '".$this->getRua()."',
+                    '".$this->getCasa()."',
+                    '$id'
+                );
+            ";
+
+        if($conection->query($sql)) {
+            $conection->close();
+            return;
+        }
+        
+        echo $conection->error;
+        return false;
+    }
+
+    public function deletar($id) {
+        require 'conectar.php';
+        $result = $conection->query("
+            DELETE FROM endereco
+            WHERE pk_compania = '".$id."';
+        ");
+        $conection->close();
+        return $result;
+    }
+
+
+    public function atualizar($id) {
+            require 'conectar.php';
+            $result = $conection->query("
+                UPDATE endereco
+                SET pais = '".$this->getPais()."',
+                    estado = '".$this->getEstado()."',
+                    cidade = '".$this->getCidade()."',
+                    bairro = '".$this->getBairro()."',
+                    rua =  '".$this->getRua()."',
+                    numero = '".$this->getCasa()."' 
+                WHERE pk_compania = '".$id."'
+            ");
+            $conection->close();
+            return $result;
     }
 
     /**
@@ -24,8 +71,10 @@ class Endereco{
      */ 
     public function setPais($pais)
     {
-        $this->pais = $pais;
-
+        if(!empty($pais))
+            $this->pais = $pais;
+        else 
+            $pais = 'default';
         return $this;
     }
 
@@ -44,7 +93,10 @@ class Endereco{
      */ 
     public function setEstado($estado)
     {
-        $this->estado = $estado;
+        if(!empty($estado))
+            $this->estado = $estado;
+        else 
+            $estado = 'default';
 
         return $this;
     }

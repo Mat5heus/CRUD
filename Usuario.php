@@ -1,21 +1,59 @@
 <?php 
-require_once 'Pessoa.php';
-class Usuario extends Pessoa{
-    private $email, $senha, $nivelAcesso;
+class Usuario {
+    private $id_usuario, $email, $senha, $nivelAcesso, $nome, $cpf, $cnh, $telefone;
 
-    public function Usuario($email, $senha, $nome = null, $cpf, $cnh, $placa, $telefone) {
-        if(!($email && $senha)) {
-            $this->setEmail($email);
-            $this->setSenha($senha);
-            Parent::($nome, $cpf, $cnh, $placa, $telefone);
-            $this->setNivelAcesso('user');
-            return true;
-        } else
-            return false;
+    public function Usuario($tipo = 'user') {
+        $this->setNivelAcesso($tipo);
     }
 
-    public function cadastrar($nome, $cpf, $cnh, $placa, $telefone) {
+    public function cadastrar() {
+        require 'conectar.php';
+        $sql = "
+            INSERT INTO usuario
+                (email, senha, nome, CPF, CNH, telefone, tipo_usuario) 
+            VALUES (
+                '".$this->getEmail()."',
+                '".$this->gerarSenha(12)."',
+                '".$this->getNome()."',
+                '".$this->getCpf()."',
+                '".$this->getCnh()."',
+                '".$this->getTelefone()."',
+                '".$this->getNivelAcesso()."'
+                );
+            ";
+        if($conection->query($sql)) {
+            $this->setId_usuario($conection->insert_id);
+            $conection->close();
+            return;
+        }
+        
+        echo $conection->error;
+        return false;
+    }
 
+    public function deletar() {
+        require 'conectar.php';
+        $result = $conection->query("
+            DELETE FROM usuario
+            WHERE id_usuario = '".$this->getId_usuario()."';
+        ");
+        $conection->close();
+        return $result;
+    }
+
+    public function atualizar() {
+        require 'conectar.php';
+        $result = $conection->query("
+            UPDATE usuario
+            SET email = '".$this->getEmail()."',
+                nome = '".$this->getNome()."',
+                telefone = '".$this->getTelefone()."',
+                cpf = '".$this->getCpf()."',
+                cnh = '".$this->getCnh()."'
+            WHERE id_usuario = '".$this->getId_usuario()."';
+        ");
+        $conection->close();
+        return $result;
     }
 
     public function estaVazio() {
@@ -25,25 +63,43 @@ class Usuario extends Pessoa{
             return true;
     }
 
-    public function pegarDados($valores) {
-        $colunas = $this->formatarString($valores);
-        $email = $this->getEmail();
-
-        include_once 'conectar.php';
+    public function pegarDados() {
+        require 'conectar.php';
         $result = $conection->query("
-                SELECT $colunas
-                FROM user_data 
-                WHERE email = '$email'
+                SELECT  id_usuario as id, email, senha, tipo_usuario
+                FROM usuario
+                WHERE email = '".$this->getEmail()."' 
+                LIMIT 1;
+            ");
+        return $result;
+        
+    }
+
+    public function pegarDadosAtribuir() {
+        require 'conectar.php';
+        $result = $conection->query("
+                SELECT  id_usuario as id, nome, telefone, tipo_usuario
+                FROM usuario
+                WHERE email = '".$this->getEmail()."' 
                 LIMIT 1
             ");
+        
+        if($row = $result->fetch_assoc()) {
+            $this->setId_usuario($row['id']);
+            $this->setNome($row['nome']);
+            $this->setTelefone($row['telefone']);
+            $this->setNivelAcesso($row['tipo_usuario']);
+            return true;
+        }
 
-        return $result;
+        return false;        
+        
     }
 
     public function validarSenha($row) {
-        if(password_verify($this->getSenha(), $row['senha'])) {
+        if(password_verify($this->getSenha(), $row['senha']))
             return true;
-        } else
+        else
             return false;
     }
 
@@ -52,18 +108,10 @@ class Usuario extends Pessoa{
         return password_hash($this->getSenha(), PASSWORD_BCRYPT, $option);
     }
 
-    public function formatarString($valores) {
-        $frase = "";
-        foreach($valores as $texto) {
-            $frase += $texto.',';
-        }
-        return rtrim($frase,',');
-    }
-
     /**
      * Get the value of email
      */ 
-    private function getEmail()
+    public function getEmail()
     {
         return $this->email;
     }
@@ -73,9 +121,12 @@ class Usuario extends Pessoa{
      *
      * @return  self
      */ 
-    private function setEmail($email)
+    public function setEmail($email)
     {
-        $this->email = $email;
+        if(!(empty($email)))
+            $this->email = $email;
+        else
+            return null;
 
         return $this;
     }
@@ -93,9 +144,12 @@ class Usuario extends Pessoa{
      *
      * @return  self
      */ 
-    private function setSenha($senha)
+    public function setSenha($senha)
     {
-        $this->senha = $senha;
+        if(!(empty($senha)))
+            $this->senha = $senha;
+        else
+            return null;
 
         return $this;
     }
@@ -116,6 +170,107 @@ class Usuario extends Pessoa{
     public function setNivelAcesso($nivelAcesso)
     {
         $this->nivelAcesso = $nivelAcesso;
+
+        return $this;
+    }
+
+
+    /**
+     * Get the value of nome
+     */ 
+    public function getNome()
+    {
+        return $this->nome;
+    }
+
+    /**
+     * Set the value of nome
+     *
+     * @return  self
+     */ 
+    public function setNome($nome)
+    {
+        $this->nome = $nome;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of cpf
+     */ 
+    public function getCpf()
+    {
+        return $this->cpf;
+    }
+
+    /**
+     * Set the value of cpf
+     *
+     * @return  self
+     */ 
+    public function setCpf($cpf)
+    {
+        $this->cpf = $cpf;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of cnh
+     */ 
+    public function getCnh()
+    {
+        return $this->cnh;
+    }
+
+    /**
+     * Set the value of cnh
+     *
+     * @return  self
+     */ 
+    public function setCnh($cnh)
+    {
+        $this->cnh = $cnh;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of telefone
+     */ 
+    public function getTelefone()
+    {
+        return $this->telefone;
+    }
+
+    /**
+     * Set the value of telefone
+     *
+     * @return  self
+     */ 
+    public function setTelefone($telefone)
+    {
+        $this->telefone = $telefone;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of id_usuario
+     */ 
+    public function getId_usuario()
+    {
+        return $this->id_usuario;
+    }
+
+    /**
+     * Set the value of id_usuario
+     *
+     * @return  self
+     */ 
+    public function setId_usuario($id_usuario)
+    {
+        $this->id_usuario = $id_usuario;
 
         return $this;
     }
